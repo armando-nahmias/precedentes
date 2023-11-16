@@ -12,3 +12,4 @@ for (coluna in colunas.data) {
 }
 
 tabela.temas <- df[, c('numeroPrecedente', 'questaoSubmetidaAJulgamento', 'situacao', 'dataPublicacaoAcordao', 'teseFirmada')]
+

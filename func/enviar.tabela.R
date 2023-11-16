@@ -1,9 +1,24 @@
 enviar.tabela.html <- function(df) {
   # Verifique se o data frame é vazio
   if (nrow(df) == 0) {
-    cat("Nenhum contrato disponível para envio.\n")
+    cat("Nenhum registro disponível para envio.\n")
     return()
+  } else {
+    cat(paste0(nrow(df), " registros disponíveis para envio.\n"))
   }
+  
+  # Mapeamento de nomes de colunas
+  mapeamento_colunas <- c(
+    "numeroPrecedente" = "Número",
+    "questaoSubmetidaAJulgamento" = "Questão",
+    "situacao" = "Situação",
+    "dataPublicacaoAcordao" = "Publicação",
+    "teseFirmada" = "Tese"
+    # Adicione mais colunas conforme necessário
+  )
+  
+  # Renomeie as colunas no DataFrame usando o mapeamento
+  colnames(df) <- mapeamento_colunas[match(colnames(df), names(mapeamento_colunas))]
   
   # Crie a tabela HTML
   tabela_html <- tableHTML::tableHTML(df)

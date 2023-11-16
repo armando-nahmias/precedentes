@@ -1,54 +1,67 @@
-enviar_tabela_html <- function(contract_data) {
-  # Check if the data frame is empty
-  if (nrow(contract_data) == 0) {
-    cat("No contracts available for sending.\n")
+enviar.tabela.html_dt <- function(df) {
+  # Verifique se o data frame é vazio
+  if (nrow(df) == 0) {
+    cat("Nenhum registro disponível para envio.\n")
     return()
+  } else {
+    cat(paste0(nrow(df), " registros disponíveis para envio.\n"))
   }
   
-  # Create HTML table
-  html_table <- tableHTML::tableHTML(contract_data)
+  # Mapeamento de nomes de colunas
+  mapeamento_colunas <- c(
+    "numeroPrecedente" = "Número",
+    "questaoSubmetidaAJulgamento" = "Questão",
+    "situacao" = "Situação",
+    "dataPublicacaoAcordao" = "Publicação",
+    "teseFirmada" = "Tese"
+    # Adicione mais colunas conforme necessário
+  )
   
-  # Generate HTML file with timestamp
+  # Renomeie as colunas no DataFrame usando o mapeamento
+  colnames(df) <- mapeamento_colunas[match(colnames(df), names(mapeamento_colunas))]
+  
+  # Nome do arquivo HTML com carimbo de data e hora
   timestamp <- format(Sys.time(), format = "%Y%m%d_%H%M%S")
-  html_file <- paste0("saida/tabela_", timestamp, ".html")
+  arquivo_html <- paste0("saida/tabela_", timestamp, ".html")
   
-  # Save HTML table to a file
-  tableHTML::write_tableHTML(html_table, file = html_file)
+  # Crie a tabela HTML usando DT
+  DT::datatable(df, rownames = F) |>
+    DT::saveWidget(file = arquivo_html, selfcontained = T)
+
   
-  # Build email body
-  email_body <- sprintf(
-    "There are %s contracts registered in total.",
-    nrow(contract_data)
-  )
+  data_formatada <- format(Sys.Date(), format = "%d/%m/%Y")
   
-  # Email settings
-  smtp_settings <- list(
-    host.name = "smtp.gmail.com",
-    port = 465,
-    user.name = "informartizar@gmail.com",
-    passwd = "hlzxyfpoymmtpvho",
-    ssl = TRUE
-  )
+  mensagem <- epoxy::epoxy('Relação atualizada até {data_formatada}')
   
-  # Send email with attachment
+  epoxy::epoxy('Há {nrow(df)} contratos registrados no total.')
+  
+epoxy::epoxy('Relação atualizada até {format(Sys.Date(), format = "%d/%m/%Y")}.')
+
+  # Configurações de envio de email
   email <- mailR::send.mail(
     from = "informartizar@gmail.com",
     to = "armando.nahmias@tjrr.jus.br",
     subject = paste0(
-      "Updated contracts list as of ",
+      "Relação de contratos atualizada até ",
       format(Sys.Date(), format = "%d/%m/%Y")
     ),
-    body = email_body,
-    smtp = smtp_settings,
+    body = corpo_email,
+    smtp = list(
+      host.name = "smtp.gmail.com",
+      port = 465,
+      user.name = "informartizar@gmail.com",
+      passwd = "hlzxyfpoymmtpvho",
+      ssl = TRUE
+    ),
     authenticate = TRUE,
     send = TRUE,
-    attach.files = html_file
+    attach.files = arquivo_html
   )
   
-  # Check if the email was sent successfully
+  # Verifique se o email foi enviado com sucesso
   if (exists('email')) {
-    cat("Email sent successfully.\n")
+    cat("Email enviado com sucesso.\n")
   } else {
-    cat("Failed to send the email.\n")
+    cat("Falha ao enviar o email.\n")
   }
 }
