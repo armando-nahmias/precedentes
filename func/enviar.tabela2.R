@@ -14,7 +14,6 @@ enviar.tabela.html_dt <- function(df) {
     "situacao" = "Situação",
     "dataPublicacaoAcordao" = "Publicação",
     "teseFirmada" = "Tese"
-    # Adicione mais colunas conforme necessário
   )
   
   # Renomeie as colunas no DataFrame usando o mapeamento
@@ -24,28 +23,19 @@ enviar.tabela.html_dt <- function(df) {
   timestamp <- format(Sys.time(), format = "%Y%m%d_%H%M%S")
   arquivo_html <- paste0("saida/tabela_", timestamp, ".html")
   
+  df$Publicação <- format(df$Publicação, format = "%d/%m/%Y")
+  
   # Crie a tabela HTML usando DT
-  DT::datatable(df, rownames = F) |>
-    DT::saveWidget(file = arquivo_html, selfcontained = T)
-
+  DT::datatable(df, rownames = F, class = 'cell-border stripe', filter = 'top')
   
-  data_formatada <- format(Sys.Date(), format = "%d/%m/%Y")
-  
-  mensagem <- epoxy::epoxy('Relação atualizada até {data_formatada}')
-  
-  epoxy::epoxy('Há {nrow(df)} contratos registrados no total.')
-  
-epoxy::epoxy('Relação atualizada até {format(Sys.Date(), format = "%d/%m/%Y")}.')
+  DT::saveWidget(file = arquivo_html, selfcontained = T)
 
   # Configurações de envio de email
   email <- mailR::send.mail(
     from = "informartizar@gmail.com",
     to = "armando.nahmias@tjrr.jus.br",
-    subject = paste0(
-      "Relação de contratos atualizada até ",
-      format(Sys.Date(), format = "%d/%m/%Y")
-    ),
-    body = corpo_email,
+    subject = epoxy::epoxy('Relação atualizada até {format(Sys.Date(), format = "%d/%m/%Y")}.'),
+    body = epoxy::epoxy('Há {nrow(df)} contratos registrados no total.'),
     smtp = list(
       host.name = "smtp.gmail.com",
       port = 465,
