@@ -8,7 +8,7 @@ enviar.tabela.html_dt <- function(df) {
   }
   
   # Mapeamento de nomes de colunas
-  mapeamento_colunas <- c(
+  mapeamento.colunas <- c(
     "numeroPrecedente" = "Número",
     "questaoSubmetidaAJulgamento" = "Questão",
     "situacao" = "Situação",
@@ -17,35 +17,47 @@ enviar.tabela.html_dt <- function(df) {
   )
   
   # Renomeie as colunas no DataFrame usando o mapeamento
-  colnames(df) <- mapeamento_colunas[match(colnames(df), names(mapeamento_colunas))]
+  colnames(df) <- mapeamento.colunas[match(colnames(df), names(mapeamento.colunas))]
   
   # Nome do arquivo HTML com carimbo de data e hora
-  timestamp <- format(Sys.time(), format = "%Y%m%d_%H%M%S")
-  arquivo_html <- paste0("saida/tabela_", timestamp, ".html")
+  timestamp <- format(Sys.time(), format = "%Y%m%d-%H%M%S")
+  arquivo.html <- paste0("saida/tabela-", timestamp, ".html")
   
   df$Publicação <- format(df$Publicação, format = "%d/%m/%Y")
   
   # Crie a tabela HTML usando DT
-  DT::datatable(df, rownames = F, class = 'cell-border stripe', filter = 'top')
+  tabela <- DT::datatable(df, rownames = F, class = 'cell-border stripe', filter = 'top')
   
-  DT::saveWidget(file = arquivo_html, selfcontained = T)
-
+  DT::saveWidget(tabela, file = arquivo.html, selfcontained = T)
+  
+  assunto <- sprintf(
+    "Relação de contratos atualizada até %s.",
+    format(Sys.time(), format = "%d/%m/%Y %H:%m")
+  )
+  
+  corpo <- sprintf(
+    "Há %s registros no total.",
+    nrow(df)
+  )
+  
+  configuracao.email <- list(
+    host.name = "smtp.gmail.com",
+    port = 465,
+    user.name = "informartizar@gmail.com",
+    passwd = "hlzxyfpoymmtpvho",
+    ssl = TRUE
+  )
+  
   # Configurações de envio de email
   email <- mailR::send.mail(
     from = "informartizar@gmail.com",
     to = "armando.nahmias@tjrr.jus.br",
-    subject = epoxy::epoxy('Relação atualizada até {format(Sys.Date(), format = "%d/%m/%Y")}.'),
-    body = epoxy::epoxy('Há {nrow(df)} contratos registrados no total.'),
-    smtp = list(
-      host.name = "smtp.gmail.com",
-      port = 465,
-      user.name = "informartizar@gmail.com",
-      passwd = "hlzxyfpoymmtpvho",
-      ssl = TRUE
-    ),
+    subject = assunto,
+    body = corpo,
+    smtp = configuracao.email,
     authenticate = TRUE,
     send = TRUE,
-    attach.files = arquivo_html
+    attach.files = arquivo.html
   )
   
   # Verifique se o email foi enviado com sucesso
