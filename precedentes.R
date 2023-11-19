@@ -1,15 +1,11 @@
+source('func/baixar_arquivos_STJ.R')
 
-df <- read.csv2('dados/temas.csv', sep = ';', header = T, colClasses = 'character', fileEncoding = 'Windows-1252')
+baixar.arquivo.STJ()
 
-df <- tibble::tibble(df)
+source('func/preparar.tabela.temas.R')
 
-# Lista de colunas que precisam ser convertidas para data
-colunas.data <- c("dataPrimeiraAfetacao", "dataJulgamento", "dataPublicacaoAcordao", "dataAudienciaPublica")
+df <- preparar.tabela.temas()
 
-# Loop para converter as colunas para o tipo de data
-for (coluna in colunas.data) {
-  df[[coluna]] <- as.Date(df[[coluna]], format = "%Y-%m-%d")
-}
+source('func/enviar.tabela.R')
 
-tabela.temas <- df[, c('numeroPrecedente', 'questaoSubmetidaAJulgamento', 'situacao', 'dataPublicacaoAcordao', 'teseFirmada')]
-
+enviar.tabela.html(df)
