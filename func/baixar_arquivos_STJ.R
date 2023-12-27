@@ -25,11 +25,47 @@ baixar.arquivo.STJ <- function() {
     url.completa <- paste0(base.url, recursos[i], arquivo)
     destino <- paste0('dados/', arquivo)
     
-    # Baixar o arquivo
-    download.file(url.completa, destfile = destino, mode = "wb")
+    if (file.exists(destino)) {
+      consultar <- FALSE
+      info.arquivo <- file.info(destino)
+      modificacao.arquivo <- format(info.arquivo$mtime, '%Y-%m-%d')
+      if (Sys.Date() > modificacao.arquivo) {
+        consultar <- TRUE
+        cat(epoxy::epoxy('Precisa atualizar o arquivo {arquivo}.\n\n\n'))
+      } else {
+        cat(epoxy::epoxy('Não precisa atualizar o arquivo {arquivo}.\n\n\n'))
+      }
+    } else {
+      consultar <- TRUE
+      cat(epoxy::epoxy('Precisa atualizar o arquivo {arquivo}.\n\n\n'))
+    }
     
-    # Ler o arquivo CSV e armazenar no dataframe
-    df <- readr::read_csv2(destino)
+    if (consultar) {
+      
+      destino.temporario <- paste0(destino, ".tmp")
+      
+      try({
+        download.file(url.completa, destfile = destino.temporario, mode = "wb")
+        # Ler o arquivo CSV e armazenar no dataframe
+        df.baixado <- readr::read_csv2(destino.temporario)
+        df.anterior <- readr::read_csv2(destino)
+        if (identical(df.baixado, df.destino)) {
+          file.remove(destino.temporario)
+          cat(epoxy::epoxy('Arquivo {arquivo} baixado é igual ao anterior.\n\n\n'))
+          df <- df.anterior
+        } else {
+          file.rename(destino.temporario, destino)
+          cat(epoxy::epoxy('Arquivo {arquivo} baixado.\n\n\n'))
+          df <- df.baixado
+        }
+      })
+      
+    } else {
+      cat(epoxy::epoxy('Arquivo {arquivo} atualizado.\n\n\n'))
+      # Ler o arquivo CSV e armazenar no dataframe
+      df <- readr::read_csv2(destino)
+    }
+    
     
     # Adicionar o dataframe à lista
     lista.df[[arquivo]] <- df
@@ -40,3 +76,6 @@ baixar.arquivo.STJ <- function() {
   saveRDS(lista.df, file = 'dados/dados-completos.rds')
   
 }
+
+
+

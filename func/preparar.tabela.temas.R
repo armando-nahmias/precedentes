@@ -6,12 +6,27 @@ preparar.tabela.temas <- function() {
   # Lista de colunas que precisam ser convertidas para data
   colunas.data <- c("dataPrimeiraAfetacao", "dataJulgamento", "dataPublicacaoAcordao", "dataAudienciaPublica")
   
-  # Loop para converter as colunas para o tipo de data
-  for (coluna in colunas.data) {
-    df[[coluna]] <- as.Date(df[[coluna]], format = "%Y-%m-%d")
-  }
+  # Converter as colunas para o tipo de data
+  df[colunas.data] <- lapply(df[colunas.data], function(x) {
+    data.formatada <- format(as.Date(x, format = '%Y-%m-%d'), '%d/%m/%Y')
+    return(data.formatada)
+  })
   
-  tabela.temas <- df[, c('numeroPrecedente', 'questaoSubmetidaAJulgamento', 'situacao', 'dataPublicacaoAcordao', 'teseFirmada')]
+  df.filtrado <- dplyr::filter(df, tipoPrecedente == 'Tema')
+  
+  tabela.temas <-
+    df.filtrado[, c(
+      'numeroPrecedente',
+      'dataPrimeiraAfetacao',
+      'dataJulgamento',
+      'dataPublicacaoAcordao',
+      'situacao',
+      'questaoSubmetidaAJulgamento',
+      'teseFirmada'
+    )]
+  
+
   
   return(tabela.temas)
 }
+
