@@ -1,4 +1,10 @@
-enviar.tabela.html <- function(df) {
+enviar.tabela.html <- function(df, teste = F) {
+  
+  if (teste) {
+    DESTINATARIO <- 'armando.nahmias@tjrr.jus.br'
+  } else {
+    DESTINATARIO <- c('armando.nahmias@tjrr.jus.br', 'debora.silva@tjrr.jus.br', 'rayandria.santiago@tjrr.jus.br')
+  }
   
   config <- jsonlite::fromJSON('conf/configuracao.json')
   EMISSOR <- 'informartizar@gmail.com'
@@ -32,12 +38,9 @@ enviar.tabela.html <- function(df) {
   horario <- format(Sys.time(), format = '%Y%m%d-%H%M%S')
   arquivo.html <- epoxy::epoxy('saida/tabela-{horario}.html')
   
-  df$Afetação <- as.Date(df$Afetação, format = '%d/%m/%Y')
-  df$Publicação <- format(df$Publicação, '%d/%m/%Y')
-  
   # Crie a tabela HTML usando DT
   tabela.html <- DT::datatable(df, rownames = F, class = 'cell-border stripe', filter = 'top', options = list(pageLength = 50)) |>
-    DT::formatDate(tabela.html, columns = c(4,6), method = 'toLocaleDateString') |>
+    DT::formatDate(columns = c(4,6), method = 'toLocaleDateString') |>
     DT::formatStyle(columns = c(3,5), textAlign = 'justify')
   
   
