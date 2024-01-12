@@ -1,6 +1,10 @@
 
 baixar.info.STJ <- function() {
+
+  consultar <- FALSE
+  atualizar <- FALSE
   
+    
   # Definir os URLs base e os caminhos locais para salvar os arquivos
   base.url <- 'https://dadosabertos.web.stj.jus.br/dataset/4238da2f-c07b-4c1a-b345-4402accacdcf/resource/'
   
@@ -27,18 +31,19 @@ baixar.info.STJ <- function() {
     arquivo <- paste0('dados/', informacao)
     
     if (file.exists(arquivo)) {
-      consultar <- FALSE
       info.arquivo <- file.info(arquivo)
       modificacao.arquivo <- format(info.arquivo$mtime, '%Y-%m-%d')
-      if (Sys.Date() > modificacao.arquivo) {
+      if (Sys.Date() + 10 > modificacao.arquivo) {
         consultar <- TRUE
         cat(epoxy::epoxy('Precisa atualizar o arquivo {informacao}.\n\n\n'))
       } else {
         cat(epoxy::epoxy('Não precisa atualizar o arquivo {informacao}.\n\n\n'))
       }
     } else {
-      consultar <- TRUE
-      cat(epoxy::epoxy('Precisa atualizar o arquivo {informacao}.\n\n\n'))
+      inicializar <- TRUE
+      cat(epoxy::epoxy('Precisa baixar o arquivo {informacao}.\n\n\n'))
+      download.file(url.completa, destfile = arquivo, mode = 'wb')
+      df <- readr::read_csv2(arquivo)
     }
     
     if (consultar) {
