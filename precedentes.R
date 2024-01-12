@@ -51,7 +51,7 @@ baixar.info.STJ <- function() {
         # Ler o arquivo CSV e armazenar no dataframe
         df.novo <- readr::read_csv2(arquivo.novo)
         df.anterior <- readr::read_csv2(arquivo)
-        if (identical(df.baixado, df.anterior)) {
+        if (identical(df.novo, df.anterior)) {
           atualizar <<- FALSE
           cat(epoxy::epoxy('Arquivo {informacao} baixado é igual ao anterior.\n\n\n'))
           df <- df.anterior
@@ -61,7 +61,7 @@ baixar.info.STJ <- function() {
           file.rename(arquivo, paste0(arquivo, '.antigo'))
           file.rename(arquivo.novo, arquivo)
           cat(epoxy::epoxy('Arquivo {informacao} anterior substituído pelo baixado.\n\n\n'))
-          df <- df.baixado
+          df <- df.novo
         }
       })
       
