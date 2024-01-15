@@ -1,4 +1,18 @@
 enviar.tabela.html <- function(df, teste = F) {
+
+  # Verificando se há arquivo anterior para comparar
+  if (!file.exists('dados/temas.csv') | !file.exists('dados/temas.csv.anterior')) {
+    cat('\n\nNão há arquivos para comparar.\n\n')
+    return()
+  }
+
+  # Verifique se o data frame é vazio
+  if (nrow(df) == 0) {
+    cat('\n\nNenhum registro disponível para envio.\n\n')
+    return()
+  } else {
+    cat(epoxy::epoxy('\n\nHá {.numero nrow(df)} registros disponíveis para envio.\n\n'))
+  }
   
   if (teste) {
     DESTINATARIO <- 'armando.nahmias@tjrr.jus.br'
@@ -16,7 +30,6 @@ enviar.tabela.html <- function(df, teste = F) {
     ssl = TRUE
   )
   
-  
   epoxy::epoxy_transform_set(
     .dia = function(x) {
       format(x, '%d/%m/%Y')
@@ -24,15 +37,6 @@ enviar.tabela.html <- function(df, teste = F) {
     .numero = function(x) {
       format(x, big.mark = '.', decimal.mark = ',')
     })
-  
-  
-  # Verifique se o data frame é vazio
-  if (nrow(df) == 0) {
-    cat('Nenhum registro disponível para envio.\n')
-    return()
-  } else {
-    cat(epoxy::epoxy('Há {.numero nrow(df)} registros disponíveis para envio.\n'))
-  }
   
   # Nome do arquivo HTML com carimbo de data e hora
   horario <- format(Sys.time(), format = '%Y%m%d-%H%M%S')
@@ -46,33 +50,56 @@ enviar.tabela.html <- function(df, teste = F) {
   
   DT::saveWidget(tabela.html, file = arquivo.html, selfcontained = T)
   
-  
-  
   # Construa o corpo do email
   # Ler o arquivo CSV e armazenar no dataframe
-  df.novo <- readr::read_csv2('dados/temas.csv')
-  df.antigo <- readr::read_csv2('dados/temas.csv.antigo')
-  
-  if (identical(df.novo, df.antigo)) {
-    cat('Não houve mudança na relação de temas.')
+  df.novo <- read.csv2('dados/temas.csv')
+  df.anterior <- read.csv2('dados/temas.csv.anterior')
+
+  if (identical(df.novo, df.anterior)) {
+    cat('\nNão houve mudança na relação de temas.\n\n')
     
-    assunto.email <- paste0(epoxy::epoxy('Em {.dia Sys.Date()}, não houve alteração na relação de temas do STJ.'))
+    if (file.exists('dados/data.checagem.rds')) {
+      data.checagem <- readRDS('dados/data.checagem.rds')
+    } else {
+      data.checagem <- Sys.Date()
+    }
+    
+    periodo <- dplyr::case_when(
+      identical(Sys.Date(), data.checagem) ~ 'Hoje',
+      identical(Sys.Date() - 1, data.checagem) ~ 'Ontem',
+      format(Sys.Date()-31, "%Y-%m") == format(data.checagem, "%Y-%m") ~ 'Desde mês passado',
+      TRUE ~ paste0(epoxy::epoxy('Desde {.dia data.checagem} até {.dia Sys.Date()}'))
+    )
+    
+    assunto.email <- paste0(epoxy::epoxy('{periodo}, não houve alteração na relação de temas do STJ.'))
     corpo.email <- paste0(epoxy::epoxy('Não houve alteração em nenhum dos {.numero nrow(df)} temas do STJ já incluídos no portal.'))
     anexo.email <- NULL
   } else {
+    cat('\nHouve mudança na relação de temas.\n\n')
+    
     assunto.email <- paste0(epoxy::epoxy('Relação de temas do STJ atualizada até {.dia Sys.Date()}.'))
     anexo.email <- arquivo.html
     
     
-    comparacao <- diffdf::diffdf(df.novo, df.antigo, suppress_warnings = TRUE)
+    comparacao <- diffdf::diffdf(df.novo, df.anterior, suppress_warnings = TRUE)
     
     if(is.integer(comparacao$NumDiff$`No of Differences`)) {
       colunas <- epoxy::epoxy('Houve {sum(comparacao$NumDiff$`No of Differences`)} mudança(s) na tabela de temas do STJ')
-      mudancas <- tableHTML::tableHTML(comparacao$NumDiff, headers = c('Variável', 'Quat. Diferenças'))
+      lista.mudancas <- list()
+      lista.variaveis <- comparacao$NumDiff$Variable
+      
+      for (variavel in lista.variaveis) {
+        assign(paste0('variavel.', variavel), epoxy::epoxy('comparacao$VarDiff_{variavel}'))
+        lista.mudancas[[variavel]] <- tableHTML::tableHTML(comparacao[[paste0('VarDiff_', variavel)]], headers = c('VARIABLE', '..ROWNUMBER..', 'BASE', 'COMPARE'))
+      }
+      
+      mudancas <- paste0(lista.mudancas)
       
     } else {
       colunas <- 'Não houve mudança em nenhuma coluna da tabela de temas do STJ.'
       mudancas <- htmltools::HTML('<br>')
+      lista.variaveis <- ''
+      variaveis <- htmltools::HTML('<br>')
     }
     
     if(is.integer(comparacao$ExtRowsBase$..ROWNUMBER..)) {
@@ -83,24 +110,22 @@ enviar.tabela.html <- function(df, teste = F) {
       inclusoes <- htmltools::HTML('<br>')
     }
     
-    cat('Houve mudança na relação de temas.')
     corpo.email <- paste0(
       epoxy::epoxy(
-        'Há {nrow(df.novo)} temas do STJ a incluir na relação do portal.'
+        'Há {.numero nrow(df.novo)} temas do STJ a incluir na relação do portal.'
       ),
       '<br><br><br>',
       colunas,
       '<br><br><br>',
-      rvest::read_html(mudancas),
+      mudancas,
       '<br><br><br>',
       linhas,
       '<br><br><br>',
-      rvest::read_html(inclusoes),
+      inclusoes,
       '<br><br><br><br><br><br>',
-      # rvest::read_html(tabela.html)
+      # rvest::read_html(tabela.html),
+      '<br>'
     )
-    
-    
   }
   
   
@@ -118,8 +143,8 @@ enviar.tabela.html <- function(df, teste = F) {
   
   # Verifique se o email foi enviado com sucesso
   if (exists('email')) {
-    cat(epoxy::epoxy('Email enviado com sucesso para {.and DESTINATARIO}.\n'))
+    cat(epoxy::epoxy('\nEmail enviado com sucesso para {.and DESTINATARIO}.\n\n'))
   } else {
-    cat(epoxy::epoxy('Falha ao enviar o email para {.and DESTINATARIO}.\n'))
+    cat(epoxy::epoxy('\nFalha ao enviar o email para {.and DESTINATARIO}.\n\n'))
   }
 }

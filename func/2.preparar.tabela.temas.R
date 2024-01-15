@@ -1,7 +1,7 @@
 preparar.tabela.temas <- function() {
-  df <- read.csv2('dados/temas.csv', sep = ';', header = T, colClasses = 'character', fileEncoding = 'Windows-1252')
+  df <- read.csv2('dados/temas.csv', sep = ';', header = TRUE, colClasses = 'character', fileEncoding = 'Windows-1252')
   
-  df <- tibble::tibble(df)
+  # df <- tibble::tibble(df)
   
   df.filtrado <- dplyr::filter(df, tipoPrecedente == 'Tema')
   
@@ -11,11 +11,11 @@ preparar.tabela.temas <- function() {
   colunas.fator <- c('tipoPrecedente', 'situacao', 'orgaoJulgador')
   colunas.logico <- c('audienciaPublica')
   
-  # Converter as colunas para o tipo de data
-  df.filtrado[colunas.data] <- lapply(df.filtrado[colunas.data], function(x) {
-    data.formatada <- as.Date(x, format = '%Y-%m-%d')
-    return(data.formatada)
-  })
+  # Ajustar o tipo de dado de cada coluna
+  # df.filtrado[colunas.data] <- lapply(df.filtrado[colunas.data], function(x) {
+  #   data.formatada <- as.Date(x, format = '%Y-%m-%d')
+  #   return(data.formatada)
+  # })
   
   df.filtrado[colunas.data] <- lapply(df.filtrado[colunas.data], as.Date)
   
