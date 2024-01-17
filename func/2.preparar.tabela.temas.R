@@ -20,9 +20,26 @@ preparar.tabela.temas <- function() {
   df.filtrado[colunas.data] <- lapply(df.filtrado[colunas.data], as.Date)
   
   df.filtrado[colunas.fator] <- lapply(df.filtrado[colunas.fator], as.factor)
-  
+
   df.filtrado[colunas.logico] <- lapply(df.filtrado[colunas.logico], as.logical.factor)
+
+  ordem.situacao <- c(
+    "Afetado - Possível Revisão de Tese",
+    "Afetado",
+    "Acórdão Publicado - RE Pendente",
+    "Acórdão Publicado",
+    "Em Julgamento",
+    "Cancelado",
+    "Mérito Julgado",
+    "Revisado",
+    "Sem Processo Vinculado",
+    "Sobrestado",
+    "Trânsito em Julgado"
+  )
   
+  df.filtrado$situacao <- factor(df.filtrado$situacao, levels = ordem.situacao)
+  
+    
   tabela.temas <-
     df.filtrado[, c(
       'numeroPrecedente',

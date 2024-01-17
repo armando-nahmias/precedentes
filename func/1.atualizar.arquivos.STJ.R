@@ -9,6 +9,9 @@ atualizar.arquivos.STJ <- function() {
     'processos' = '7ed21202-0049-4fcb-aa7c-48d810d3c499/download/'
   )
   
+  # baixados <- list()
+  # substituidos <- list()
+  
   for (i in seq_along(informacoes)) {
     informacao <- informacoes[i]
     url.completa <-
@@ -55,6 +58,7 @@ atualizar.arquivos.STJ <- function() {
                       mode = 'wb')
         df.baixado <- read.csv2(arquivo.baixado)
         df.anterior <- read.csv2(arquivo)
+        # baixados <- append(names(informacao))
         
         if (identical(df.baixado, df.anterior)) {
           atualizar <- FALSE
@@ -77,4 +81,12 @@ atualizar.arquivos.STJ <- function() {
       })
     }
   }
+  
+  # cat(
+  #   epoxy::epoxy(
+  #     '\n\nDurante a consulta, constatou-se a necessidade de baixar os arquivos {.and baixados}, sendo que os arquivos {.and substituidos} são iguais aos anteriores.\n\n'
+  #     
+  #   )
+  # )
+  
 }

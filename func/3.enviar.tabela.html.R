@@ -43,12 +43,8 @@ enviar.tabela.html <- function(df, teste = F) {
   arquivo.html <- epoxy::epoxy('saida/tabela-{horario}.html')
   
   # Crie a tabela HTML usando DT
-  tabela.html <- DT::datatable(df, rownames = F, class = 'cell-border stripe', filter = 'top', options = list(pageLength = 50)) |>
-    DT::formatDate(columns = c(4,6), method = 'toLocaleDateString') |>
-    DT::formatStyle(columns = c(3,5), textAlign = 'justify')
-  
-  
-  DT::saveWidget(tabela.html, file = arquivo.html, selfcontained = T)
+  source(here::here('func', '4.criar.tabela.html.R'))
+  tabela.html <- criar.tabela.html(tabela.temas, arquivo.html)
   
   # Construa o corpo do email
   # Ler o arquivo CSV e armazenar no dataframe
@@ -137,8 +133,9 @@ enviar.tabela.html <- function(df, teste = F) {
     body = corpo.email,
     smtp = SMTP.CONFIG,
     authenticate = TRUE,
-    send = TRUE,
-    attach.files = anexo.email
+    html = TRUE,
+    attach.files = anexo.email,
+    send = TRUE
   )
   
   # Verifique se o email foi enviado com sucesso
