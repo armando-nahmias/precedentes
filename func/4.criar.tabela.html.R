@@ -4,7 +4,7 @@ criar.tabela.html <- function(df, arquivo.html) {
   # Crie a tabela HTML usando DT
   tabela.html <-
     DT::datatable(
-      tabela.temas,
+      df,
       rownames = F,
       class = 'cell-border stripe',
       filter = 'top',

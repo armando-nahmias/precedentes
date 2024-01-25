@@ -63,7 +63,5 @@ preparar.tabela.temas <- function() {
   # Renomeie as colunas no DataFrame usando o mapeamento
   colnames(tabela.temas) <- mapeamento.colunas[match(colnames(tabela.temas), names(mapeamento.colunas))]
   
-  
-  
   return(tabela.temas)
 }

@@ -1,7 +1,15 @@
 enviar.tabela.html <- function(df, teste = F) {
 
+  epoxy::epoxy_transform_set(
+    .dia = function(x) {
+      format(x, '%d/%m/%Y')
+    },
+    .numero = function(x) {
+      format(x, big.mark = '.', decimal.mark = ',')
+    })
+  
   # Verificando se há arquivo anterior para comparar
-  if (!file.exists('dados/temas.csv') | !file.exists('dados/temas.csv.anterior')) {
+  if (!file.exists('dados/temas.csv') | !file.exists('dados/temas.anterior.csv')) {
     cat('\n\nNão há arquivos para comparar.\n\n')
     return()
   }
@@ -30,26 +38,19 @@ enviar.tabela.html <- function(df, teste = F) {
     ssl = TRUE
   )
   
-  epoxy::epoxy_transform_set(
-    .dia = function(x) {
-      format(x, '%d/%m/%Y')
-    },
-    .numero = function(x) {
-      format(x, big.mark = '.', decimal.mark = ',')
-    })
-  
   # Nome do arquivo HTML com carimbo de data e hora
   horario <- format(Sys.time(), format = '%Y%m%d-%H%M%S')
   arquivo.html <- epoxy::epoxy('saida/tabela-{horario}.html')
   
   # Crie a tabela HTML usando DT
   source(here::here('func', '4.criar.tabela.html.R'))
-  tabela.html <- criar.tabela.html(tabela.temas, arquivo.html)
+  tabela.html <- criar.tabela.html(df, arquivo.html)
   
   # Construa o corpo do email
   # Ler o arquivo CSV e armazenar no dataframe
   df.novo <- read.csv2('dados/temas.csv')
-  df.anterior <- read.csv2('dados/temas.csv.anterior')
+  df.anterior <- read.csv2('dados/temas.anterior.csv')
+  quantidade.temas <- nrow(dplyr::filter(df.novo, tipoPrecedente == "Tema"))
 
   if (identical(df.novo, df.anterior)) {
     cat('\nNão houve mudança na relação de temas.\n\n')
@@ -68,7 +69,7 @@ enviar.tabela.html <- function(df, teste = F) {
     )
     
     assunto.email <- paste0(epoxy::epoxy('{periodo}, não houve alteração na relação de temas do STJ.'))
-    corpo.email <- paste0(epoxy::epoxy('Não houve alteração em nenhum dos {.numero nrow(df)} temas do STJ já incluídos no portal.'))
+    corpo.email <- paste0(epoxy::epoxy('Não houve alteração em nenhum dos {.numero quantidade.temas} temas do STJ já incluídos no portal.'))
     anexo.email <- NULL
   } else {
     cat('\nHouve mudança na relação de temas.\n\n')
@@ -102,13 +103,13 @@ enviar.tabela.html <- function(df, teste = F) {
       linhas <- epoxy::epoxy('Houve a adição da(s) linha(s) {.and comparacao$ExtRowsBase$..ROWNUMBER..} na tabela de temas do STJ.')
       inclusoes <- tableHTML::tableHTML(df.novo[comparacao$ExtRowsBase$..ROWNUMBER..,])
     } else {
-      linhas <- 'Não aumentou a quantidade de temas do SJT.'
+      linhas <- 'Não aumentou a quantidade de temas do STJ.'
       inclusoes <- htmltools::HTML('<br>')
     }
     
     corpo.email <- paste0(
       epoxy::epoxy(
-        'Há {.numero nrow(df.novo)} temas do STJ a incluir na relação do portal.'
+        'Há {.numero quantidade.temas} temas do STJ a incluir na relação do portal.'
       ),
       '<br><br><br>',
       colunas,
@@ -118,8 +119,6 @@ enviar.tabela.html <- function(df, teste = F) {
       linhas,
       '<br><br><br>',
       inclusoes,
-      '<br><br><br><br><br><br>',
-      # rvest::read_html(tabela.html),
       '<br>'
     )
   }

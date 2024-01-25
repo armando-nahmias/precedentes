@@ -50,7 +50,7 @@ atualizar.arquivos.STJ <- function() {
     }
     
     if (consultar) {
-      arquivo.baixado <- paste0(arquivo, '.baixado')
+      arquivo.baixado <- paste0('dados/', names(informacao), '.baixado.csv')
       
       try({
         download.file(url = url.completa,
@@ -70,7 +70,7 @@ atualizar.arquivos.STJ <- function() {
           
         } else {
           atualizar <- TRUE
-          file.rename(arquivo, paste0(arquivo, '.anterior'))
+          file.rename(arquivo, paste0('dados/', names(informacao), '.anterior.csv'))
           file.rename(arquivo.baixado, arquivo)
           cat(
             epoxy::epoxy(
